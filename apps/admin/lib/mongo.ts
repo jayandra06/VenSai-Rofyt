@@ -1,45 +1,52 @@
 import { Db, MongoClient } from "mongodb";
 
-const globalForMongo = globalThis as unknown as { mongoClient?: MongoClient };
+const globalForMongo = globalThis as unknown as {
+  mongoClient?: MongoClient;
+  indexesEnsured?: boolean;
+};
 
+/** Atlas / MongoDB connection string for the admin portal (required). */
 export function getMongoUri(): string {
-  const uri = process.env.MONGODB_URI?.trim() || process.env.DATABASE_URL?.trim();
+  const uri = process.env.MONGODB_URI?.trim();
   if (!uri) {
-    throw new Error("MONGODB_URI is not configured.");
+    throw new Error("MONGODB_URI is not set. Add your MongoDB cluster URI to the admin portal .env.");
   }
   return uri;
 }
 
-/** Platform catalog DB (venture registry, future Atlas metadata). */
-export function getPlatformDatabaseName(): string {
-  return process.env.MONGODB_PLATFORM_DB?.trim() || "vensai_admin_platform";
+/** Single central database for admin.vensailabs.in (ventures + admin users + future modules). */
+export function getCentralDatabaseName(): string {
+  return process.env.MONGODB_DB_NAME?.trim() || "vensai_admin";
 }
 
 export async function getMongoClient(): Promise<MongoClient> {
   if (globalForMongo.mongoClient) {
     return globalForMongo.mongoClient;
   }
-  const client = new MongoClient(getMongoUri());
+  const client = new MongoClient(getMongoUri(), {
+    maxPoolSize: 10,
+  });
   await client.connect();
-  if (process.env.NODE_ENV !== "production") {
-    globalForMongo.mongoClient = client;
-  }
+  globalForMongo.mongoClient = client;
   return client;
 }
 
-export async function getPlatformDb(): Promise<Db> {
+/** Central DB handle — all admin portal data lives here until per-venture split is added. */
+export async function getCentralDb(): Promise<Db> {
   const client = await getMongoClient();
-  return client.db(getPlatformDatabaseName());
+  return client.db(getCentralDatabaseName());
 }
 
-/** Per-venture logical database on the cluster (ROFYT, ROFABS, …). */
-export function ventureDatabaseName(ventureKey: string): string {
-  const key = ventureKey.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
-  const prefix = process.env.MONGODB_VENTURE_DB_PREFIX?.trim() || "vensai_venture_";
-  return `${prefix}${key}`;
+export async function pingCentralDb(): Promise<{ ok: true; dbName: string } | { ok: false; error: string }> {
+  try {
+    const db = await getCentralDb();
+    await db.command({ ping: 1 });
+    return { ok: true, dbName: db.databaseName };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "MongoDB ping failed." };
+  }
 }
 
-export async function getVentureDb(ventureKey: string): Promise<Db> {
-  const client = await getMongoClient();
-  return client.db(ventureDatabaseName(ventureKey));
+export function isMongoConfigured(): boolean {
+  return Boolean(process.env.MONGODB_URI?.trim());
 }

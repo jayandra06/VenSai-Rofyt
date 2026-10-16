@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { findAdminUserById } from "@/lib/admin-users";
-import { ventureDatabaseName } from "@/lib/mongo";
+import { getCentralDatabaseName, isMongoConfigured } from "@/lib/mongo";
 import { getSession } from "@/lib/session";
 
 export default async function AdminDashboardPage() {
@@ -11,7 +12,7 @@ export default async function AdminDashboardPage() {
   const user = await findAdminUserById(session.ventureKey, session.userId);
   if (!user) redirect("/login");
 
-  const dbName = ventureDatabaseName(user.ventureKey);
+  const centralDb = getCentralDatabaseName();
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-50">
@@ -24,13 +25,16 @@ export default async function AdminDashboardPage() {
         <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
           <h2 className="font-medium">Business workspace</h2>
           <p className="mt-2 text-sm text-zinc-400">
-            ERP modules, fleet, bookings, and staff tools will live here per venture. MongoDB database
-            for this venture: <code className="text-xs text-zinc-300">{dbName}</code>
+            Central MongoDB database:{" "}
+            <code className="text-xs text-zinc-300">{centralDb}</code>
+            {isMongoConfigured() ? " · connected via server MONGODB_URI" : " · MONGODB_URI not set on server"}
           </p>
-          <p className="mt-3 text-xs text-zinc-500">
-            Public URL: admin.vensailabs.in — shared by all VenSai ventures; isolation is by venture
-            key and separate MongoDB databases (dedicated clusters later via Atlas automation).
-          </p>
+          <Link
+            href="/dashboard/clusters"
+            className="mt-4 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500"
+          >
+            Manage venture MongoDB clusters
+          </Link>
           <form action="/api/auth/logout" method="post" className="mt-6">
             <button
               type="submit"

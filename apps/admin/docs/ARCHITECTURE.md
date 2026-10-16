@@ -1,25 +1,20 @@
 # VenSai Venture Admin — `admin.vensailabs.in`
 
-Single admin portal for **all** VenSai ventures (ROFYT, ROFABS, …). Not per-venture hosts like `admin-rofyt.*`.
+## Central MongoDB (server `.env`)
 
-## Tenancy
+| Variable | Purpose |
+|----------|---------|
+| `MONGODB_URI` | Boots the admin portal and stores the **registry** |
+| `MONGODB_DB_NAME` | Central DB name (default `vensai_admin`) |
 
-| Layer | Isolation |
-|-------|-----------|
-| **URL** | One host: `admin.vensailabs.in` |
-| **Login** | Venture key + email + password |
-| **MongoDB** | One cluster URI in `MONGODB_URI`; each venture gets its own **database** (e.g. `vensai_venture_rofyt`) |
-| **Registry** | Platform DB `vensai_admin_platform` collection `ventures` tracks assignments |
+## Venture cluster registry (UI)
 
-CRM seeds admins via `POST /api/internal/provisioning/admin` (unchanged contract). Each seed registers the venture if needed and writes the user into that venture’s MongoDB database.
+After login: **Dashboard → Manage venture MongoDB clusters**
 
-## Environment
+| Action | What it does |
+|--------|----------------|
+| **Test & save URI** | Pings the URI, stores it on `venture_mongo_clusters` for that venture key (for CRM `.env` / next app) |
+| **Create Atlas cluster** | Uses Atlas Admin API (if `ATLAS_*` env set), saves `provisioning` until **Refresh** returns the SRV URI |
+| **List** | All ventures → cluster URI / status |
 
-See repo root `.env.example`. Minimum for admin deploy:
-
-- `MONGODB_URI`
-- `VENTURE_PROVISIONING_SECRET`
-
-## Atlas automation (planned)
-
-When `ATLAS_AUTO_CLUSTER=1` and API keys are set, future code can create a **dedicated cluster** per venture and store its URI on the venture registry document. Until then, all ventures share the cluster URI and differ by database name only.
+Collection: `venture_mongo_clusters` in the central database.

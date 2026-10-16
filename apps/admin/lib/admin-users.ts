@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
-import { getVentureDb } from "@/lib/mongo";
+import { ensureCentralIndexes } from "@/lib/central-indexes";
+import { getCentralDb } from "@/lib/mongo";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { ensureVentureRegistered } from "@/lib/venture-registry";
 
@@ -23,10 +24,10 @@ export async function seedAdminUser(input: {
   const email = input.email.trim().toLowerCase();
   const ventureKey = input.ventureKey.trim().toLowerCase();
   await ensureVentureRegistered(ventureKey);
+  await ensureCentralIndexes();
 
   const passwordHash = await hashPassword(input.password);
-  const db = await getVentureDb(ventureKey);
-  const col = db.collection<Omit<AdminUserDoc, "_id">>(COL);
+  const col = (await getCentralDb()).collection<Omit<AdminUserDoc, "_id">>(COL);
   const now = new Date();
 
   const existing = await col.findOne({ ventureKey, email });
@@ -42,15 +43,15 @@ export async function seedAdminUser(input: {
     createdAt: now,
     updatedAt: now,
   });
-  await col.createIndex({ ventureKey: 1, email: 1 }, { unique: true });
   return "seeded";
 }
 
 export async function authenticateAdmin(ventureKey: string, email: string, password: string) {
   const key = ventureKey.trim().toLowerCase();
   const normalized = email.trim().toLowerCase();
-  const db = await getVentureDb(key);
-  const user = await db.collection<AdminUserDoc>(COL).findOne({ ventureKey: key, email: normalized });
+  const user = await (await getCentralDb())
+    .collection<AdminUserDoc>(COL)
+    .findOne({ ventureKey: key, email: normalized });
   if (!user) return null;
   const ok = await verifyPassword(password, user.passwordHash);
   if (!ok) return null;
@@ -59,8 +60,7 @@ export async function authenticateAdmin(ventureKey: string, email: string, passw
 
 export async function findAdminUserById(ventureKey: string, userId: string) {
   if (!ObjectId.isValid(userId)) return null;
-  const db = await getVentureDb(ventureKey);
-  return db.collection<AdminUserDoc>(COL).findOne({
+  return (await getCentralDb()).collection<AdminUserDoc>(COL).findOne({
     _id: new ObjectId(userId),
     ventureKey: ventureKey.trim().toLowerCase(),
   });

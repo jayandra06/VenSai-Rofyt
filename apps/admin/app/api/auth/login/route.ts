@@ -11,7 +11,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!process.env.MONGODB_URI?.trim() && !process.env.DATABASE_URL?.trim()) {
+  if (!process.env.MONGODB_URI?.trim()) {
     return NextResponse.json({ error: "MongoDB is not configured (MONGODB_URI)." }, { status: 503 });
   }
 
