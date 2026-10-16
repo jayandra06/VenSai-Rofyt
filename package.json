@@ -1,0 +1,11 @@
+{
+  "name": "rofyt",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "dev:erp": "pnpm --filter @rofyt/erp dev",
+    "dev:admin": "pnpm --filter @rofyt/admin dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  }
+}
