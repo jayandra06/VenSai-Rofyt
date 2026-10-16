@@ -3,21 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3101",
-    "build": "next build",
+    "dev": "prisma generate && next dev --port 3101",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
+    "@prisma/client": "^6.8.0",
     "@rofyt/provisioning-contract": "workspace:*",
+    "bcryptjs": "^3.0.2",
     "next": "16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
+    "prisma": "^6.8.0",
     "typescript": "^5.8.3"
   }
 }
