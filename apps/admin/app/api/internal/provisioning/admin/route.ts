@@ -16,6 +16,17 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!process.env.MONGODB_URI?.trim() && !process.env.DATABASE_URL?.trim()) {
+    return NextResponse.json(
+      {
+        success: false,
+        status: "failed",
+        message: "Admin portal MongoDB is not configured (MONGODB_URI).",
+      },
+      { status: 503 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -36,19 +47,8 @@ export async function POST(req: Request) {
 
   if (parsed.data.targetKey !== "admin") {
     return NextResponse.json(
-      { success: false, status: "failed", message: "Wrong target for ROFYT Admin Portal." },
+      { success: false, status: "failed", message: "Wrong target for VenSai venture admin portal." },
       { status: 400 },
-    );
-  }
-
-  if (!process.env.DATABASE_URL?.trim()) {
-    return NextResponse.json(
-      {
-        success: false,
-        status: "failed",
-        message: "Admin portal database is not configured (DATABASE_URL).",
-      },
-      { status: 503 },
     );
   }
 
@@ -67,8 +67,8 @@ export async function POST(req: Request) {
       adminEmail: parsed.data.adminEmail,
       message:
         status === "seeded"
-          ? "Administrator account created. You can sign in at /login."
-          : "Administrator account updated. Sign in at /login with the new password.",
+          ? "Administrator account created on admin.vensailabs.in — sign in with venture key + email."
+          : "Administrator account updated for this venture.",
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to persist administrator.";

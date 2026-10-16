@@ -3,8 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const PUBLIC_HOST = "admin.vensailabs.in";
+
 export default function AdminLoginPage() {
   const router = useRouter();
+  const [ventureKey, setVentureKey] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -13,9 +16,11 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-zinc-50">
       <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-8 shadow-lg">
-        <h1 className="text-xl font-semibold">ROFYT Admin</h1>
+        <h1 className="text-xl font-semibold">VenSai Venture Admin</h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Sign in to manage your venture. Accounts are created from VenSai CRM → Ventures.
+          One portal for all ventures (ROFYT, ROFABS, …) at{" "}
+          <strong className="text-zinc-300">{PUBLIC_HOST}</strong>. Accounts are seeded from VenSai
+          CRM → Ventures.
         </p>
         <form
           className="mt-6 space-y-4"
@@ -27,7 +32,11 @@ export default function AdminLoginPage() {
               const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({
+                  ventureKey: ventureKey.trim().toLowerCase(),
+                  email,
+                  password,
+                }),
               });
               const data = (await res.json()) as { error?: string };
               if (!res.ok) {
@@ -43,6 +52,16 @@ export default function AdminLoginPage() {
             }
           }}
         >
+          <label className="block text-sm">
+            Venture key
+            <input
+              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm"
+              required
+              placeholder="rofyt"
+              value={ventureKey}
+              onChange={(e) => setVentureKey(e.target.value)}
+            />
+          </label>
           <label className="block text-sm">
             Email
             <input

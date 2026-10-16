@@ -9,7 +9,7 @@ Monorepo for **ROFYT ERP** and **ROFYT Admin Portal**, provisioned from **VenSai
 | Path | Role |
 |------|------|
 | `apps/erp` | Main ERP (`rofyt.vensailabs.in`) |
-| `apps/admin` | Admin portal (`admin-rofyt.vensailabs.in`) |
+| `apps/admin` | **VenSai Venture Admin** — all ventures (`admin.vensailabs.in`) |
 | `packages/provisioning-contract` | Shared health/provisioning API types |
 
 ## Local dev
@@ -30,7 +30,7 @@ This repo uses **pnpm workspaces** (`workspace:*`). Vercel must **not** use plai
 2. Leave **Install Command** empty (each app’s `vercel.json` runs `pnpm install` from the repo root).
 3. Commit **`pnpm-lock.yaml`** so Vercel detects pnpm via `packageManager` in the root `package.json`.
 
-Domains (when ready): `rofyt.vensailabs.in` → ERP project, `admin-rofyt.vensailabs.in` → Admin project.
+Domains: `rofyt.vensailabs.in` → ERP project; **`admin.vensailabs.in`** → Admin project (multi-venture).
 
 Health: `GET /api/health`  
 Provisioning (CRM → target): `POST /api/internal/provisioning/admin` with `Authorization: Bearer <VENTURE_PROVISIONING_SECRET>`
@@ -42,6 +42,7 @@ See `next-crm-app/docs/ventures/ARCHITECTURE.md`. CRM registers targets, tests h
 ## Phase status
 
 - [x] Monorepo + contract + health endpoints
-- [ ] ERP/Admin auth + PostgreSQL
-- [ ] Real admin seeding in provisioning handlers
+- [x] Venture admin portal + MongoDB (shared cluster, DB per venture)
+- [ ] Atlas auto-cluster per venture
+- [ ] ERP auth + MongoDB
 - [ ] Deploy to `*.vensailabs.in`

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 
-const COOKIE = "rofyt_admin_session";
+const COOKIE = "vensai_admin_session";
 
 function secret(): string {
   const s = process.env.SESSION_SECRET?.trim() || process.env.VENTURE_PROVISIONING_SECRET?.trim();
@@ -9,22 +9,24 @@ function secret(): string {
   return s;
 }
 
-export function signSession(userId: string, maxAgeSec = 60 * 60 * 24 * 7): string {
+export function signSession(ventureKey: string, userId: string, maxAgeSec = 60 * 60 * 24 * 7): string {
   const exp = Math.floor(Date.now() / 1000) + maxAgeSec;
-  const payload = `${userId}.${exp}`;
+  const payload = `${ventureKey}.${userId}.${exp}`;
   const sig = createHmac("sha256", secret()).update(payload).digest("hex");
   return `${payload}.${sig}`;
 }
 
-export function verifySessionToken(token: string | undefined): string | null {
+export function verifySessionToken(
+  token: string | undefined,
+): { ventureKey: string; userId: string } | null {
   if (!token) return null;
   const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  const [userId, expStr, sig] = parts;
+  if (parts.length !== 4) return null;
+  const [ventureKey, userId, expStr, sig] = parts;
   const exp = Number(expStr);
-  if (!userId || !Number.isFinite(exp) || !sig) return null;
+  if (!ventureKey || !userId || !Number.isFinite(exp) || !sig) return null;
   if (exp < Math.floor(Date.now() / 1000)) return null;
-  const payload = `${userId}.${expStr}`;
+  const payload = `${ventureKey}.${userId}.${expStr}`;
   const expected = createHmac("sha256", secret()).update(payload).digest("hex");
   try {
     const a = Buffer.from(sig);
@@ -33,17 +35,17 @@ export function verifySessionToken(token: string | undefined): string | null {
   } catch {
     return null;
   }
-  return userId;
+  return { ventureKey, userId };
 }
 
-export async function getSessionUserId(): Promise<string | null> {
+export async function getSession(): Promise<{ ventureKey: string; userId: string } | null> {
   const jar = await cookies();
   return verifySessionToken(jar.get(COOKIE)?.value);
 }
 
-export async function setSessionCookie(userId: string) {
+export async function setSessionCookie(ventureKey: string, userId: string) {
   const jar = await cookies();
-  jar.set(COOKIE, signSession(userId), {
+  jar.set(COOKIE, signSession(ventureKey, userId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

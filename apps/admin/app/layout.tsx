@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "ROFYT Admin",
-  description: "VenSai Labs venture admin portal",
+  title: "VenSai Venture Admin",
+  description: "admin.vensailabs.in — all VenSai Labs ventures",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
