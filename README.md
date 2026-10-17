@@ -1,48 +1,40 @@
-# ROFYT — Car Rental ERP (VenSai Labs)
+# VenSai Rofyt
 
-Git: [github.com/jayandra06/rofyt-vensailabs](https://github.com/jayandra06/rofyt-vensailabs)
+Next.js car rental platform for **VenSai Labs** (operator) and **licensed rental companies** (tenants).
 
-Monorepo for **ROFYT ERP** and **ROFYT Admin Portal**, provisioned from **VenSai CRM → Ventures**.
+| URL (production target) | Audience | Login |
+|---------------------------|----------|--------|
+| `rofyt.vensailabs.in/` | Public hub | Links to Admin / ERP |
+| `rofyt.vensailabs.in/admin` | Platform owner (you) | Email + password — **Seed account** in [VenSai Admin Portal](https://admin.vensailabs.in) → Ventures → Rofyt (cluster **0**, DB `rofyt`) |
+| `rofyt.vensailabs.in/erp` | Car rental companies | Org code **1+**, email, temp password from invitation |
 
-## Structure
-
-| Path | Role |
-|------|------|
-| `apps/erp` | Main ERP (`rofyt.vensailabs.in`) |
-| `apps/admin` | **VenSai Venture Admin** — all ventures (`admin.vensailabs.in`) |
-| `packages/provisioning-contract` | Shared health/provisioning API types |
-
-## Local dev
+## Local development
 
 ```bash
-pnpm install
-pnpm dev:erp    # http://localhost:3100
-pnpm dev:admin  # http://localhost:3101
+npm install
+npm run dev
 ```
 
-## Deploy on Vercel (pnpm monorepo)
+Open [http://localhost:3001](http://localhost:3001). ERP login: [http://localhost:3001/erp/login](http://localhost:3001/erp/login). Admin: [http://localhost:3001/admin/login](http://localhost:3001/admin/login).
 
-This repo uses **pnpm workspaces** (`workspace:*`). Vercel must **not** use plain `npm install`.
+`.env.local`:
 
-1. Create **two** Vercel projects from this GitHub repo (or one for ERP first):
-   - **ROFYT ERP** — set **Root Directory** to `apps/erp`
-   - **ROFYT Admin** — set **Root Directory** to `apps/admin`
-2. Leave **Install Command** empty (each app’s `vercel.json` runs `pnpm install` from the repo root).
-3. Commit **`pnpm-lock.yaml`** so Vercel detects pnpm via `packageManager` in the root `package.json`.
+- `MONGODB_URI` — same Atlas host as saved in Admin Portal venture `.env`
+- `PLATFORM_DB=rofyt`
+- `AUTH_SECRET` — long random string
 
-Domains: `rofyt.vensailabs.in` → ERP project; **`admin.vensailabs.in`** → Admin project (multi-venture).
+## Tenancy
 
-Health: `GET /api/health`  
-Provisioning (CRM → target): `POST /api/internal/provisioning/admin` with `Authorization: Bearer <VENTURE_PROVISIONING_SECRET>`
+- **Cluster 0** → database `rofyt` (platform)
+- **Cluster N** → database `rofyt-N` (customer org), org code = `N`
 
-## CRM integration
+Provisioning (invite, DB create, email) is done from the **VenSai Admin Portal**, not from this app’s `.env` store.
 
-See `next-crm-app/docs/ventures/ARCHITECTURE.md`. CRM registers targets, tests health, then seeds admins — **only after** ROFYT returns real success (not mocked).
+## Docs
 
-## Phase status
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — system design
+- [docs/ROADMAP.md](./docs/ROADMAP.md) — phased ERP + marketplace + mobile
 
-- [x] Monorepo + contract + health endpoints
-- [x] Venture admin portal + MongoDB (shared cluster, DB per venture)
-- [ ] Atlas auto-cluster per venture
-- [ ] ERP auth + MongoDB
-- [ ] Deploy to `*.vensailabs.in`
+## Repository
+
+GitHub: [jayandra06/VenSai-Rofyt](https://github.com/jayandra06/VenSai-Rofyt.git)
